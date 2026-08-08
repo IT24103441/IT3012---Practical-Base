@@ -55,20 +55,23 @@ class VisualGridHuntGame:
         self.score = 0
         self.steps = 0
         self.collision = False
+def get_percept(self):
+    x, y = self.agent_pos
 
-    def get_percept(self) -> dict:
-        return {
-            'agent_pos': list(self.agent_pos),
-            'opponent_positions': [list(op) for op in self.opponents],
-            'smells_food': tuple(self.agent_pos) in self.food_positions,
-            'smells_toxin': tuple(self.agent_pos) in self.toxic_traps,   # NEW SENSOR
-            'hit_wall': tuple(self.agent_pos) in self.walls,
-            'collision': self.collision,
-            'score': self.score,
-            'remaining_food': len(self.food_positions)
-        }
+    # Assume agent always looks in the direction of its last move
+    ahead = (x + 1, y)
 
-    def execute_action(self, action: str):
+    wall_ahead = (
+        ahead[0] >= self.width or
+        ahead in self.walls
+    )
+
+    return {
+        "food_here": (x, y) in self.food_positions,
+        "toxin_here": (x, y) in self.toxic_traps,
+        "wall_ahead": wall_ahead
+    }
+  def execute_action(self, action: str):
         self.steps += 1
         new_pos = list(self.agent_pos)
 
@@ -114,6 +117,18 @@ class VisualGridHuntGame:
       def is_done(self) -> bool:
         return len(self.food_positions) == 0 or self.steps >= 60 or self.collision
 
+class SimpleReflexAgent:
+
+    def sense_and_act(self, percept):
+
+        if percept["food_here"]:
+            return "Stay"
+
+        elif percept["wall_ahead"]:
+            return random.choice(["Up", "Down"])
+
+        else:
+            return "Right"
 
 class GridGameGUI:
     """Tkinter wrapper that dynamically scales cell sizes to keep larger grids on screen."""
@@ -129,6 +144,7 @@ class GridGameGUI:
             num_opponents=num_opponents,
             custom_walls=walls
         )
+    self.agent = SimpleReflexAgent()
 
           # Dynamically calculate cell size so the total canvas fits nicely within a 600x600 window ceiling
 max_canvas_dim = 600
@@ -255,7 +271,8 @@ def run_loop(self):
 
         def step():
                     if not self.env.is_done():
-                     action = random.choice(['Up', 'Down', 'Left', 'Right'])
+                     percept = self.env.get_percept()
+                    action = self.agent.sense_and_act(percept)
                     self.env.execute_action(action)
 
                     self.draw_grid()
