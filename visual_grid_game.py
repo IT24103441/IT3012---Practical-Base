@@ -48,13 +48,18 @@ class VisualGridHuntGame:
         return {
             "food_here": (x, y) in self.food_positions,
             "toxin_here": (x, y) in self.toxic_traps,
-            "wall_ahead": wall_ahead
+            "wall_ahead": wall_ahead,
+            
+            'grid_size': (self.width, self.height),
+            'walls': list(self.walls),
+            'all_food': list(self.food_positions)
         }
 
     def execute_action(self, action):
         self.steps += 1
         new_pos = list(self.agent_pos)
 
+        # Map movement strings or actions
         if action == "Up":
             new_pos[1] = min(self.height - 1, new_pos[1] + 1)
         elif action == "Down":
@@ -63,7 +68,9 @@ class VisualGridHuntGame:
             new_pos[0] = max(0, new_pos[0] - 1)
         elif action == "Right":
             new_pos[0] = min(self.width - 1, new_pos[0] + 1)
-        elif action != "Stay":
+        elif action == "Stay":
+            pass
+        else:
             return
 
         if tuple(new_pos) in self.walls:
@@ -110,42 +117,7 @@ class VisualGridHuntGame:
         return len(self.food_positions) == 0 or self.steps >= 60 or self.collision
 
 
-class SimpleReflexAgent:
-    def sense_and_act(self, percept):
-        if percept["food_here"]:
-            return "Stay"
-        elif percept["wall_ahead"]:
-            return random.choice(["Up", "Down"])
-        else:
-            return "Right"
-
-
-class ModelBasedAgent:
-    def __init__(self):
-        self.visited = set()
-        self.last_action = "Right"
-
-    def sense_and_act(self, percept):
-        self.visited.add(tuple(percept.items()))
-
-        if percept["food_here"]:
-            return "Stay"
-
-        if percept["wall_ahead"]:
-            if self.last_action == "Right":
-                self.last_action = "Up"
-                return "Up"
-            elif self.last_action == "Up":
-                self.last_action = "Left"
-                return "Left"
-            else:
-                self.last_action = "Down"
-                return "Down"
-
-        self.last_action = "Right"
-        return "Right"
-
-
+# Keep the GUI and main block intact for execution
 class GridGameGUI:
     def __init__(self, root, width=10, height=10, num_food=12, num_opponents=2, walls=None):
         self.root = root
@@ -159,7 +131,9 @@ class GridGameGUI:
             custom_walls=walls
         )
 
-        self.agent = ModelBasedAgent()
+        # Later you will replace this with your SearchAgent() from agent.py
+        from agent import SearchAgent
+        self.agent = SearchAgent()
 
         max_canvas_dim = 600
         self.cell_size = max(
@@ -312,10 +286,7 @@ class GridGameGUI:
                 text=f"Score: {self.env.score} | Steps: {self.env.steps} | Action: {action}"
             )
 
-            if self.env.is_done():
-                self.root.after(250, step)
-            else:
-                self.root.after(250, step)
+            self.root.after(250, step)
 
         step()
 
