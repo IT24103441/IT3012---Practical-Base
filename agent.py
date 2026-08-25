@@ -18,7 +18,7 @@ class SearchAgent:
  
             if not all_food:
                 return 'Stay'
-             
+
             target_food = min(
                 all_food,
                 key=lambda f: abs(f[0] - agent_pos[0]) + abs(f[1] - agent_pos[1])
@@ -34,6 +34,11 @@ class SearchAgent:
             elif self.active_algo == 'UCS':
                 self.plan = self.ucs_search(agent_pos, target_food, grid_size, walls)
 
+            elif self.active_algo == 'AStar':
+                self.plan = self.astar_search(
+                    agent_pos, target_food, walls, grid_size,
+                    heuristic_type='manhattan'
+                )
             else:
                 self.plan = []
  
@@ -186,7 +191,7 @@ class SearchAgent:
                     heapq.heappush(frontier, (f_new, g_new, neighbor, path_taken + [action]))
  
         return []
- 
+
 if __name__ == '__main__':
     agent = SearchAgent()
  
